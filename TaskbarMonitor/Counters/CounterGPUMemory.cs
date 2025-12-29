@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Management;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using System.Text;
@@ -182,11 +183,17 @@ namespace TaskbarMonitor.Counters
             /*var category = new PerformanceCounterCategory("GPU Local Adapter Memory");
             var counterNames = category.GetInstanceNames();
 
-            List<PerformanceCounter> gpuCounters = counterNames
-                                    .Where(counterName => counterName.EndsWith("part_0"))
-                                    .SelectMany(counterName => category.GetCounters(counterName))
-                                    .Where(counter => counter.CounterName.Equals("Local Usage"))
-                                    .ToList();
+            //List<PerformanceCounter> gpuCounters = counterNames
+            //                        .Where(counterName => counterName.EndsWith("part_0"))
+            //                        .SelectMany(counterName => category.GetCounters(counterName))
+            //                        .Where(counter => counter.CounterName.Equals("Local Usage"))
+            //                        .ToList();
+
+            //gpuCounters.ForEach(x => x.NextValue());
+            //max = gpuCounters.Sum(x => x.NextValue()) / 1024 / 1024 / 1024;            
+
+            var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController");
+            var objects = searcher.Get();
 
             gpuCounters.ForEach(x => x.NextValue());
             max = gpuCounters.Sum(x => x.NextValue()) / 1024;            */
@@ -195,9 +202,9 @@ namespace TaskbarMonitor.Counters
              
             lock (ThreadLock)
             {
-                InfoSummary = new CounterInfo() { Name = "GPU Summary", History = new List<float>(), MaximumValue = max };
+                InfoSummary = new CounterInfo() { Name = "GPU MEM Summary", History = new List<float>(), MaximumValue = max };
                 Infos = new List<CounterInfo>();
-                Infos.Add(new CounterInfo() { Name = "GPU", History = new List<float>(), MaximumValue = max });
+                Infos.Add(new CounterInfo() { Name = "GPU MEM", History = new List<float>(), MaximumValue = max });
             }
         }
         public override void Update()
@@ -223,7 +230,7 @@ namespace TaskbarMonitor.Counters
                 InfoSummary.CurrentStringValue = (InfoSummary.CurrentValue).ToString("0.0") + "GB";
 
                 {
-                    var info = Infos.Where(x => x.Name == "GPU").Single();
+                    var info = Infos.Where(x => x.Name == "GPU MEM").Single();
                     info.CurrentValue = currentValue;
                     info.History.Add(currentValue);
                     if (info.History.Count > Options.HistorySize) info.History.RemoveAt(0);
